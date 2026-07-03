@@ -6,8 +6,16 @@ const gridValueElement = document.getElementById("gridValue");
 const currentPlayerElement = document.getElementById("currentPlayer");
 const playerStatsElement = document.getElementById("playerStats");
 const analyticsContainer = document.getElementById("analyticsContainer");
+const gameModeElement = document.getElementById("gameMode");
+const hintBtnElement = document.getElementById("hintBtn");
+const difficultyElement = document.getElementById("difficulty");
 
 const COLORS = ["red", "blue", "green", "yellow"];
+
+gameModeElement.addEventListener("change", (e) => {
+    document.getElementById("difficultyGroup").style.display = e.target.value === 'pvai' ? 'flex' : 'none';
+});
+document.getElementById("difficultyGroup").style.display = gameModeElement.value === 'pvai' ? 'flex' : 'none';
 
 let boardSize = 8;
 let state = {};
@@ -88,13 +96,28 @@ function renderBoard() {
     }
 }
 
+function clearHint() {
+    for (let r = 0; r < boardSize; r++) {
+        for (let c = 0; c < boardSize; c++) {
+            const cellEl = boardElement.children[r * boardSize + c];
+            if (cellEl) cellEl.classList.remove('hint');
+        }
+    }
+}
+
 function addDot(row, col) {
     if (!state.isActive) return;
     
     const player = state.players[state.currentPlayer];
+    if (state.gameMode === 'pvai' && player !== COLORS[0] && !state.isAiTurnProcessing) {
+        return; // Prevent human click during AI turn
+    }
+    
     const cell = state.board[row][col];
 
     if (cell.owner && cell.owner !== player) return;
+
+    clearHint();
 
     // Analytics: Record move
     state.analytics.moves++;
@@ -105,20 +128,143 @@ function addDot(row, col) {
     cell.owner = player;
     cell.dots++;
 
-    resolveBoard();
+    let didExplode = resolveBoard();
     
     if (state.isActive) {
         checkGameOver();
     }
     
     if (state.isActive) {
-        nextTurn();
+        // If we strictly follow the prompt's "extra turn after box completion" mapped to "extra turn after explosion"
+        if (didExplode) {
+            // Player gets another turn
+            currentPlayerElement.textContent = state.players[state.currentPlayer] + " (Extra Turn!)";
+        } else {
+            nextTurn();
+        }
     }
     render();
 }
 
+function getBestMove(player) {
+    let bestMoves = [];
+    let bestScore = -Infinity;
+
+    for (let r = 0; r < boardSize; r++) {
+        for (let c = 0; c < boardSize; c++) {
+            const cell = state.board[r][c];
+            if (cell.owner && cell.owner !== player) continue;
+
+            const capacity = getCapacity(r, c);
+            const isAboutToExplode = (cell.dots + 1 >= capacity);
+
+            let score = 0;
+
+            if (isAboutToExplode) {
+                // Highest priority: Completes a box (triggers explosion)
+                score += 1000;
+            }
+
+            // Check if placing a dot here is vulnerable to an immediate opponent explosion
+            let isVulnerable = false;
+
+            for (const [dr, dc] of [[-1, 0], [1, 0], [0, -1], [0, 1]]) {
+                const nr = r + dr;
+                const nc = c + dc;
+                if (nr >= 0 && nr < boardSize && nc >= 0 && nc < boardSize) {
+                    const neighbor = state.board[nr][nc];
+                    if (neighbor.owner && neighbor.owner !== player) {
+                        const neighborCapacity = getCapacity(nr, nc);
+                        if (neighbor.dots >= neighborCapacity - 1) {
+                            // Opponent is one dot away from exploding here
+                            isVulnerable = true;
+                        }
+                    }
+                }
+            }
+
+            if (!isVulnerable) {
+                // Medium priority: Safe move
+                score += 100;
+            } else {
+                // Vulnerable move
+                score -= 100;
+                if (!isAboutToExplode && (cell.dots + 1 === capacity - 1)) {
+                    // Lowest priority: creates a 3-sided box next to an opponent (leaves it at capacity - 1 next to an almost full opponent)
+                    score -= 500;
+                }
+            }
+            
+            if (score > bestScore) {
+                bestScore = score;
+                bestMoves = [{r, c}];
+            } else if (score === bestScore) {
+                bestMoves.push({r, c});
+            }
+        }
+    }
+
+    if (bestMoves.length === 0) return null;
+    return bestMoves[Math.floor(Math.random() * bestMoves.length)];
+}
+
+function getRandomMove(player) {
+    let validMoves = [];
+    for (let r = 0; r < boardSize; r++) {
+        for (let c = 0; c < boardSize; c++) {
+            const cell = state.board[r][c];
+            if (!cell.owner || cell.owner === player) {
+                validMoves.push({r, c});
+            }
+        }
+    }
+    if (validMoves.length === 0) return null;
+    return validMoves[Math.floor(Math.random() * validMoves.length)];
+}
+
+function handleAiTurn() {
+    if (!state.isActive) return;
+    const player = state.players[state.currentPlayer];
+    if (state.gameMode === 'pvai' && player !== COLORS[0] && !state.isAiTurnProcessing) {
+        state.isAiTurnProcessing = true;
+        boardElement.classList.add('ai-thinking');
+        
+        setTimeout(() => {
+            if (!state.isActive) return;
+            
+            let move;
+            const diff = difficultyElement.value;
+            
+            if (diff === 'easy') {
+                move = getRandomMove(player);
+            } else if (diff === 'medium') {
+                if (Math.random() < 0.5) {
+                    move = getBestMove(player);
+                } else {
+                    move = getRandomMove(player);
+                }
+            } else {
+                move = getBestMove(player);
+            }
+            
+            if (move) {
+                addDot(move.r, move.c);
+            }
+            
+            boardElement.classList.remove('ai-thinking');
+            state.isAiTurnProcessing = false;
+            
+            // Check if it's still AI's turn (e.g. they got an extra turn)
+            if (state.isActive && state.players[state.currentPlayer] !== COLORS[0]) {
+                handleAiTurn();
+            }
+        }, 500);
+    }
+}
+
 function resolveBoard() {
     let changed = true;
+    let anyExplosion = false;
 
     while (changed) {
         changed = false;
@@ -130,10 +276,12 @@ function resolveBoard() {
                 if (cell.dots >= getCapacity(row, col)) {
                     explode(row, col, cell.owner);
                     changed = true;
+                    anyExplosion = true;
                 }
             }
         }
     }
+    return anyExplosion;
 }
 
 function explode(row, col, owner) {
@@ -221,13 +369,32 @@ function renderStats() {
 
 function render() {
     if (state.isActive) {
-        currentPlayerElement.textContent = state.players[state.currentPlayer];
+        if (!currentPlayerElement.textContent.includes("Extra Turn!")) {
+            currentPlayerElement.textContent = state.players[state.currentPlayer];
+        } else {
+            // Update the text but keep the Extra Turn suffix
+            currentPlayerElement.textContent = state.players[state.currentPlayer] + " (Extra Turn!)";
+        }
+        
+        // Trigger AI turn if needed
+        if (state.gameMode === 'pvai' && state.players[state.currentPlayer] !== COLORS[0]) {
+            // Wait slightly so render happens before AI blocking
+            setTimeout(handleAiTurn, 50);
+        }
     } else {
         currentPlayerElement.textContent = state.winner === 'draw' ? 'Draw!' : `${state.winner.toUpperCase()} Wins!`;
     }
 
     renderBoard();
     renderStats();
+    
+    if (state.isActive && state.gameMode === 'pvai' && state.players[state.currentPlayer] !== COLORS[0]) {
+        hintBtnElement.disabled = true;
+    } else if (state.isActive) {
+        hintBtnElement.disabled = false;
+    } else {
+        hintBtnElement.disabled = true;
+    }
 }
 
 function startGame() {
@@ -248,6 +415,8 @@ function startGame() {
         players: players,
         board: createBoard(boardSize),
         lastMoveTime: Date.now(),
+        gameMode: gameModeElement.value,
+        isAiTurnProcessing: false,
         analytics: {
             moves: 0,
             moveTimes: moveTimes,
@@ -383,6 +552,22 @@ document.getElementById("newGame").addEventListener("click", () => {
     }
     startGame();
 });
+
+if (hintBtnElement) {
+    hintBtnElement.addEventListener("click", () => {
+        if (!state.isActive) return;
+        const player = state.players[state.currentPlayer];
+        if (state.gameMode === 'pvai' && player !== COLORS[0]) return; // Not human's turn
+        
+        clearHint();
+        const bestMove = getBestMove(player);
+        if (bestMove) {
+            const cellIdx = bestMove.r * boardSize + bestMove.c;
+            const cellEl = boardElement.children[cellIdx];
+            if (cellEl) cellEl.classList.add('hint');
+        }
+    });
+}
 
 renderAnalytics();
 startGame();

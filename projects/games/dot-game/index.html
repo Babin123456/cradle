@@ -18,6 +18,27 @@
     <section class="card controls">
 
         <div class="control-group">
+            <label for="gameMode">
+                Mode
+            </label>
+            <select id="gameMode">
+                <option value="pvp" selected>Player vs Player</option>
+                <option value="pvai">Player vs AI</option>
+            </select>
+        </div>
+
+        <div class="control-group" id="difficultyGroup">
+            <label for="difficulty">
+                Difficulty
+            </label>
+            <select id="difficulty">
+                <option value="easy">Easy</option>
+                <option value="medium">Medium</option>
+                <option value="hard" selected>Hard</option>
+            </select>
+        </div>
+
+        <div class="control-group">
             <label for="playerCount">
                 Players
             </label>
@@ -57,6 +78,10 @@
 
         <button id="newGame" class="btn">
             New Game
+        </button>
+
+        <button id="hintBtn" class="btn">
+            Hint
         </button>
 
     </section>
