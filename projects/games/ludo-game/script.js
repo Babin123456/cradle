@@ -181,7 +181,7 @@ function rollDice() {
             
             setTimeout(() => {
                 diceValue = null; 
-                nextTurn(); // Safely pass the turn to Green!
+                nextTurn(); 
             }, 1200);
             return;
         }
