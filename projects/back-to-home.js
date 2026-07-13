@@ -1,6 +1,6 @@
-// Reusable Back to Home Button Component for Cradle Projects
+
 (function() {
-  // 1. Create container for styling
+ 
   const style = document.createElement('style');
   style.textContent = `
     .cradle-back-btn {
@@ -50,13 +50,11 @@
   `;
   document.head.appendChild(style);
 
-  // 2. Create the link element
   const link = document.createElement('a');
   link.className = 'cradle-back-btn';
   link.href = '../../../index.html';
   link.title = 'Back to Cradle Home';
   
-  // 3. Set the HTML content with a premium SVG back-arrow icon and text
   link.innerHTML = `
     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
       <line x1="19" y1="12" x2="5" y2="12"></line>
@@ -65,7 +63,7 @@
     <span>Back to Home</span>
   `;
 
-  // 4. Append to body once loaded
+ 
   if (document.body) {
     document.body.appendChild(link);
   } else {
