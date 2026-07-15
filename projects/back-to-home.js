@@ -1,6 +1,16 @@
 
-(function() {
- 
+(function () {
+
+  // Don't show the button on the homepage
+  const isHomepage =
+    window.location.pathname === "/" ||
+    window.location.pathname.endsWith("/index.html") ||
+    !window.location.pathname.includes("/projects/");
+
+  if (isHomepage) {
+    return;
+  }
+
   const style = document.createElement('style');
   style.textContent = `
     .cradle-back-btn {
@@ -54,7 +64,7 @@
   link.className = 'cradle-back-btn';
   link.href = '../../../index.html';
   link.title = 'Back to Cradle Home';
-  
+
   link.innerHTML = `
     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
       <line x1="19" y1="12" x2="5" y2="12"></line>
@@ -63,7 +73,7 @@
     <span>Back to Home</span>
   `;
 
- 
+
   if (document.body) {
     document.body.appendChild(link);
   } else {
