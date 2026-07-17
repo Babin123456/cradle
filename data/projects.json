@@ -1,5 +1,10 @@
 [
   {
+    "title": "2048 Game",
+    "category": "games",
+    "path": "projects/games/2048-game/"
+  },
+  {
     "title": "AI Circuit Builder",
     "category": "aiml",
     "path": "projects/aiml/ai-circuit-builder/"
