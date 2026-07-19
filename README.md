@@ -56,6 +56,20 @@ http://localhost:8000
 4. For Individual projects
    - Open their `index.html` directly on browser 
 
+## 🗂️ Architecture Documentation
+
+Every project in Cradle includes an `ARCHITECTURE.md` file that explains its folder structure, components, data flow, and design decisions. If you are adding a new project, use the standardized template at the repository root:
+
+```text
+ARCHITECTURE_TEMPLATE.md
+```
+
+See [CONTRIBUTING.md](CONTRIBUTING.md#architecture-documentation) for full instructions on how to fill it in.
+
+## 🔧 Troubleshooting
+
+Running into issues? Check the [Troubleshooting Guide](TROUBLESHOOT.md) for solutions to common setup, development, and Git problems before opening a new issue.
+
 ## 🤝 Contributing
 
 Contributions are welcome! Whether you're fixing bugs, improving documentation, or adding new ideas and experiments, your help is greatly appreciated.
