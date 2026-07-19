@@ -11,8 +11,9 @@ Pairwise is a single-player memory card game. The player is presented with 64 fa
 ```
 memory-flip-game/
 ├── index.html   # Page shell: navbar, home screen, game screen, result screen
+├── utils.js     # Score management utilities (localStorage)
 ├── script.js    # All game logic and screen management
-└── style.css    # CSS flip animation, tile styling, layout
+└── styles.css   # CSS flip animation, tile styling, layout
 ```
 
 ---
@@ -91,16 +92,18 @@ Layout uses a CSS Grid of `repeat(8, 1fr)` for the board and flexbox for the nav
 
 ## State Management
 
-State is tracked with four module-level variables in `script.js`:
+State is tracked with several module-level variables in `script.js`:
 
 | Variable | Type | Purpose |
 |---|---|---|
 | `flippedCards` | `Element[]` | Holds the one or two currently face-up, unmatched cards |
 | `matchedPairs` | `number` | Count of matched pairs; wins when it reaches 32 |
-| `flipCount` | `number` | Total number of two-card flip attempts |
+| `flipCount` | `number` | Total number of two-card flip attempts in Standard Mode |
+| `flipsLeft` | `number` | Remaining flips left in Challenge Mode (starts at 50) |
+| `currentMode` | `string` | Selected game mode: `"standard"` or `"challenge"` |
 | `boardLocked` | `boolean` | Prevents further clicks during the mismatch delay |
 
-There is no persistent state — each game starts fresh with no `localStorage` involvement.
+Scores are persisted locally via `localStorage` for both Standard and Challenge modes, and the personal bests are loaded and updated dynamically.
 
 ---
 
