@@ -1,15 +1,20 @@
 <!DOCTYPE html>
-<html lang="en" >
+<html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>Cannon Shooting</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Cannon Shooting Defense</title>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/meyer-reset/2.0/reset.min.css">
-<link rel="stylesheet" href="./style.css">
-
+  <link rel="stylesheet" href="./style.css">
 </head>
 <body>
-<!-- partial:index.partial.html -->
 <div class="game-wrapper">
+  <header class="cannon-hud">
+    <div class="hud-item"><span class="hud-label">Score:</span> <span id="score-display">0</span></div>
+    <div class="hud-item"><span class="hud-label">Streak:</span> <span id="streak-display">0</span></div>
+    <div class="hud-item"><span class="hud-label">Best Streak:</span> <span id="best-streak-display">0</span></div>
+  </header>
+
   <div class="countdown">10</div>
   <div class="game-container">
     <div class="game-col computer-col">
@@ -83,10 +88,10 @@
     </div>
   </div>
 </div>
-<!-- partial -->
   <script src='https://cdnjs.cloudflare.com/ajax/libs/jquery/3.4.1/jquery.min.js'></script>
   <script src="../../../src/components/ui/BackToHome/BackToHome.js" defer></script>
+  <script src="cannonEngine.js"></script>
+  <script src="cannonStorage.js"></script>
   <script src="./script.js"></script>
-
 </body>
 </html>
