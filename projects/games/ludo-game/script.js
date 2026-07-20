@@ -1,6 +1,7 @@
+// --- LUDO GAME CANVAS CONTROLLER ---
 const canvas = document.getElementById("ludoCanvas");
 const ctx = canvas.getContext("2d");
-const CELL_SIZE = 40; // 600 / 15
+const CELL_SIZE = 40;
 const BOARD_SIZE = 15;
 
 const statusElement = document.getElementById("status");
@@ -9,50 +10,12 @@ const moveList = document.getElementById("moveList");
 const moveCount = document.getElementById("moveCount");
 const diceCube = document.getElementById("diceCube");
 
-const COLORS = ["red", "green", "blue", "yellow"];
 const THEME = {
     red: "#ff4757", green: "#2ed573", blue: "#1e90ff", yellow: "#ffc312",
     redDark: "#c0392b", greenDark: "#1e8449", blueDark: "#1565c0", yellowDark: "#d4a017",
     boardBg: "#1a1a2e", trackBg: "#2a2a40", border: "#3a3a55", safeZone: "#35354d",
     centerBg: "#222240"
 };
-
-const GLOBAL_TRACK = [
-    [6,1],[6,2],[6,3],[6,4],[6,5],
-    [5,6],[4,6],[3,6],[2,6],[1,6],[0,6],
-    [0,7],
-    [0,8],[1,8],[2,8],[3,8],[4,8],[5,8],
-    [6,9],[6,10],[6,11],[6,12],[6,13],[6,14],
-    [7,14],
-    [8,14],[8,13],[8,12],[8,11],[8,10],[8,9],
-    [9,8],[10,8],[11,8],[12,8],[13,8],[14,8],
-    [14,7],
-    [14,6],[13,6],[12,6],[11,6],[10,6],[9,6],
-    [8,5],[8,4],[8,3],[8,2],[8,1],[8,0],
-    [7,0]
-];
-
-const SAFE_ZONES = [
-    [6,1], [2,6], [1,8], [6,13],
-    [8,13], [12,8], [13,6], [8,1]
-];
-
-// 5 steps to reach center triangle
-const VICTORY_PATHS = {
-    red:    [[7,1], [7,2], [7,3], [7,4], [7,5]],
-    green:  [[1,7], [2,7], [3,7], [4,7], [5,7]],
-    blue:   [[7,13], [7,12], [7,11], [7,10], [7,9]],
-    yellow: [[13,7], [12,7], [11,7], [10,7], [9,7]]
-};
-
-const HOME_CENTERS = {
-    red: [[2,2], [2,3], [3,2], [3,3]],
-    green: [[2,11], [2,12], [3,11], [3,12]],
-    blue: [[11,11], [11,12], [12,11], [12,12]],
-    yellow: [[11,2], [11,3], [12,2], [12,3]]
-};
-
-const START_INDEX = { red: 0, green: 13, blue: 26, yellow: 39 };
 
 let currentPlayerIndex = 0;
 let diceValue = null;
@@ -75,24 +38,6 @@ let state = {
     yellow: createTokens("yellow")
 };
 
-function createTokens(color) {
-    return Array.from({ length: 4 }, (_, id) => ({
-        id,
-        color,
-        position: -1, // -1 means home
-        isVictoryPath: false,
-        finished: false,
-        // Animation states
-        currentX: HOME_CENTERS[color][id][1] * CELL_SIZE + CELL_SIZE/2,
-        currentY: HOME_CENTERS[color][id][0] * CELL_SIZE + CELL_SIZE/2,
-        targetX: null,
-        targetY: null,
-        animProgress: 1,
-        zOffset: 0
-    }));
-}
-
-// --- RENDERING ENGINE ---
 function roundRect(x, y, w, h, r) {
     ctx.beginPath();
     ctx.moveTo(x + r, y);
@@ -109,12 +54,9 @@ function roundRect(x, y, w, h, r) {
 
 function drawBoard() {
     ctx.clearRect(0, 0, canvas.width, canvas.height);
-    
-    // Board background
     ctx.fillStyle = THEME.boardBg;
     ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-    // Draw Homes with subtle inner gradient
     const homes = [
         { color: 'red', x: 0, y: 0 },
         { color: 'green', x: 9, y: 0 },
@@ -132,14 +74,12 @@ function drawBoard() {
         ctx.fillRect(h.x * CELL_SIZE, h.y * CELL_SIZE, 6 * CELL_SIZE, 6 * CELL_SIZE);
     });
 
-    // Inner home boxes (darker for dark theme)
     ctx.fillStyle = "#12122a";
     roundRect(1.2*CELL_SIZE, 1.2*CELL_SIZE, 3.6*CELL_SIZE, 3.6*CELL_SIZE, 10); ctx.fill();
     roundRect(10.2*CELL_SIZE, 1.2*CELL_SIZE, 3.6*CELL_SIZE, 3.6*CELL_SIZE, 10); ctx.fill();
     roundRect(10.2*CELL_SIZE, 10.2*CELL_SIZE, 3.6*CELL_SIZE, 3.6*CELL_SIZE, 10); ctx.fill();
     roundRect(1.2*CELL_SIZE, 10.2*CELL_SIZE, 3.6*CELL_SIZE, 3.6*CELL_SIZE, 10); ctx.fill();
 
-    // Home slots (empty circles)
     COLORS.forEach(color => {
         HOME_CENTERS[color].forEach(([r, c]) => {
             ctx.beginPath();
@@ -154,14 +94,12 @@ function drawBoard() {
         });
     });
 
-    // Global Track
     ctx.lineWidth = 1;
     ctx.strokeStyle = THEME.border;
     GLOBAL_TRACK.forEach(([r, c]) => {
         let isSafe = SAFE_ZONES.some(z => z[0]===r && z[1]===c);
         ctx.fillStyle = isSafe ? THEME.safeZone : THEME.trackBg;
         
-        // Color starting tiles
         if (r===6 && c===1)  ctx.fillStyle = THEME.red;
         if (r===1 && c===8)  ctx.fillStyle = THEME.green;
         if (r===8 && c===13) ctx.fillStyle = THEME.blue;
@@ -170,7 +108,6 @@ function drawBoard() {
         ctx.fillRect(c * CELL_SIZE, r * CELL_SIZE, CELL_SIZE, CELL_SIZE);
         ctx.strokeRect(c * CELL_SIZE, r * CELL_SIZE, CELL_SIZE, CELL_SIZE);
         
-        // Safe zone star
         if (isSafe) {
             ctx.fillStyle = "rgba(255,255,255,0.3)";
             ctx.font = "18px Outfit";
@@ -180,7 +117,6 @@ function drawBoard() {
         }
     });
 
-    // Victory Paths (with gradient intensity)
     COLORS.forEach(color => {
         VICTORY_PATHS[color].forEach(([r, c], i) => {
             ctx.globalAlpha = 0.5 + (i * 0.1);
@@ -192,16 +128,11 @@ function drawBoard() {
         });
     });
 
-    // Center Triangles
     ctx.lineWidth = 1;
     ctx.strokeStyle = THEME.border;
-    // Yellow (bottom-left)
     ctx.beginPath(); ctx.moveTo(6*CELL_SIZE, 9*CELL_SIZE); ctx.lineTo(7.5*CELL_SIZE, 7.5*CELL_SIZE); ctx.lineTo(9*CELL_SIZE, 9*CELL_SIZE); ctx.closePath(); ctx.fillStyle = THEME.yellow; ctx.fill(); ctx.stroke();
-    // Green (top-right)
     ctx.beginPath(); ctx.moveTo(9*CELL_SIZE, 6*CELL_SIZE); ctx.lineTo(7.5*CELL_SIZE, 7.5*CELL_SIZE); ctx.lineTo(6*CELL_SIZE, 6*CELL_SIZE); ctx.closePath(); ctx.fillStyle = THEME.green; ctx.fill(); ctx.stroke();
-    // Red (left)
     ctx.beginPath(); ctx.moveTo(6*CELL_SIZE, 6*CELL_SIZE); ctx.lineTo(7.5*CELL_SIZE, 7.5*CELL_SIZE); ctx.lineTo(6*CELL_SIZE, 9*CELL_SIZE); ctx.closePath(); ctx.fillStyle = THEME.red; ctx.fill(); ctx.stroke();
-    // Blue (right)
     ctx.beginPath(); ctx.moveTo(9*CELL_SIZE, 6*CELL_SIZE); ctx.lineTo(9*CELL_SIZE, 9*CELL_SIZE); ctx.lineTo(7.5*CELL_SIZE, 7.5*CELL_SIZE); ctx.closePath(); ctx.fillStyle = THEME.blue; ctx.fill(); ctx.stroke();
 }
 
@@ -210,7 +141,6 @@ function drawTokens() {
         state[color].forEach(token => {
             if (token.finished) return;
 
-            // Handle jumping animation interpolation
             if (token.animProgress < 1) {
                 token.animProgress += 0.05;
                 if (token.animProgress > 1) token.animProgress = 1;
@@ -224,23 +154,20 @@ function drawTokens() {
             }
 
             let isHovered = hoveredToken === token;
-            let canMove = isHovered && isValidMove(token);
+            let canMove = isHovered && isValidMove(token, COLORS[currentPlayerIndex], diceValue);
             let tx = token.currentX;
             let ty = token.currentY - token.zOffset;
 
-            // Glow for valid movable tokens
             if (canMove) {
                 ctx.shadowColor = THEME[color];
                 ctx.shadowBlur = 20;
             }
 
-            // Drop shadow
             ctx.beginPath();
             ctx.ellipse(tx, token.currentY + 2, 10, 4, 0, 0, 2*Math.PI);
             ctx.fillStyle = 'rgba(0,0,0,0.25)';
             ctx.fill();
 
-            // Outer ring
             ctx.beginPath();
             ctx.arc(tx, ty, 14, 0, 2*Math.PI);
             ctx.fillStyle = '#eee';
@@ -249,7 +176,6 @@ function drawTokens() {
             ctx.lineWidth = 2;
             ctx.stroke();
 
-            // Inner gradient fill
             let grd = ctx.createRadialGradient(tx - 3, ty - 4, 2, tx, ty, 11);
             grd.addColorStop(0, '#fff');
             grd.addColorStop(0.3, THEME[color]);
@@ -259,7 +185,6 @@ function drawTokens() {
             ctx.fillStyle = grd;
             ctx.fill();
 
-            // Specular highlight
             ctx.beginPath();
             ctx.arc(tx - 3, ty - 4, 4, 0, 2*Math.PI);
             ctx.fillStyle = 'rgba(255,255,255,0.35)';
@@ -277,9 +202,6 @@ function renderLoop() {
 }
 requestAnimationFrame(renderLoop);
 
-
-
-// --- LOGIC ---
 function getTokenCoordinate(token) {
     if (token.finished) return null;
     
@@ -318,8 +240,6 @@ function rollDice() {
     setTimeout(() => {
         diceValue = Math.floor(Math.random() * 6) + 1;
         diceCube.classList.remove('rolling');
-        
-        // Reset classes
         diceCube.className = `cube show-${diceValue}`;
         
         isRolling = false;
@@ -328,126 +248,23 @@ function rollDice() {
         saveGame();
         checkAutoTurn();
     }, 1000);
-
 }
 
 function checkAutoTurn() {
-    let validMoves = state[COLORS[currentPlayerIndex]].filter(t => isValidMove(t));
+    let validMoves = state[COLORS[currentPlayerIndex]].filter(t => isValidMove(t, COLORS[currentPlayerIndex], diceValue));
     if (validMoves.length === 0) {
         setTimeout(nextTurn, 1000);
     } else if (playerTypes[COLORS[currentPlayerIndex]] === 'bot') {
         setTimeout(() => executeAITurn(validMoves), 800);
-    } else if (validMoves.length === 1 && validMoves[0].position !== -1) {
-        // Auto move if only one valid non-home token
-        // setTimeout(() => executeMove(validMoves[0]), 500); // optional polish
     }
 }
 
 function executeAITurn(validMoves) {
     if (validMoves.length === 0) return;
-    
-    let bestMove = null;
-    let bestScore = -1;
-
-    // Heuristic evaluation
-    validMoves.forEach(token => {
-        let score = evaluateMove(token);
-        if (score > bestScore) {
-            bestScore = score;
-            bestMove = token;
-        } else if (score === bestScore) {
-            // Random tie break
-            if (Math.random() > 0.5) {
-                bestMove = token;
-            }
-        }
-    });
-
+    const bestMove = selectBestBotMove(validMoves, diceValue, state);
     if (bestMove) {
         executeMove(bestMove);
     }
-}
-
-function evaluateMove(token) {
-    let score = 10; // Base score for any valid move
-    
-    // Simulate move
-    let newPosition = -1;
-    let newIsVictoryPath = token.isVictoryPath;
-
-    if (token.position === -1) {
-        score += 50; // Move out of home
-        newPosition = START_INDEX[token.color];
-    } else if (token.isVictoryPath) {
-        newPosition = token.position + diceValue;
-        if (newPosition === 5) {
-            score += 50; // Finished
-        }
-    } else {
-        let dist = calculateDistanceToHome(token);
-        if (diceValue > dist) {
-            newIsVictoryPath = true;
-            newPosition = diceValue - dist - 1;
-            score += 50; // Entering victory path
-        } else {
-            newPosition = (token.position + diceValue) % 52;
-        }
-    }
-
-    // Check captures
-    if (!newIsVictoryPath && newPosition !== -1) {
-        let [r, c] = GLOBAL_TRACK[newPosition];
-        let isSafe = SAFE_ZONES.some(z => z[0]===r && z[1]===c);
-        
-        if (isSafe) {
-            score += 50; // Moving to safe zone
-        } else {
-            // Check if capturing opponent
-            COLORS.forEach(c => {
-                if (c !== token.color) {
-                    state[c].forEach(targetToken => {
-                        if (!targetToken.isVictoryPath && targetToken.position === newPosition) {
-                            score += 100; // Capture opponent
-                        }
-                    });
-                }
-            });
-        }
-    }
-    
-    return score;
-}
-
-function isValidMove(token) {
-    if (COLORS[currentPlayerIndex] !== token.color || diceValue === null) return false;
-    if (token.finished) return false;
-
-    if (token.position === -1) {
-        return diceValue === 6;
-    }
-
-    if (token.isVictoryPath) {
-        return token.position + diceValue <= 5; // 5 means finished
-    }
-
-    // Checking distance to home entry
-    let distToHome = calculateDistanceToHome(token);
-    if (diceValue > distToHome + 5) {
-        return false; // Overshoots center
-    }
-
-    return true;
-}
-
-function calculateDistanceToHome(token) {
-    let homeEntryIndex;
-    if (token.color === 'red') homeEntryIndex = 50;
-    if (token.color === 'green') homeEntryIndex = 11;
-    if (token.color === 'blue') homeEntryIndex = 24;
-    if (token.color === 'yellow') homeEntryIndex = 37;
-
-    if (token.position <= homeEntryIndex) return homeEntryIndex - token.position;
-    return (52 - token.position) + homeEntryIndex;
 }
 
 function executeMove(token) {
@@ -464,18 +281,17 @@ function executeMove(token) {
         let dist = calculateDistanceToHome(token);
         if (diceValue > dist) {
             token.isVictoryPath = true;
-            token.position = diceValue - dist - 1; // 0-based index in victory path
+            token.position = diceValue - dist - 1;
         } else {
             token.position = (token.position + diceValue) % 52;
         }
         
-        // Handle capturing (simplified, no safe zones check for capture in this basic version for brevity, but easy to add)
         handleCaptures(token);
     }
 
     animateTokenTo(token);
     
-    if (checkWinner(token.color)) {
+    if (checkWinner(state, token.color)) {
         gameOver = true;
         setStatus(`${capitalize(token.color)} wins!`);
         localStorage.removeItem('ludoSave');
@@ -483,7 +299,7 @@ function executeMove(token) {
     }
 
     if (diceValue !== 6 && !token.finished) {
-        setTimeout(nextTurn, 600); // Wait for animation
+        setTimeout(nextTurn, 600);
     } else {
         setTimeout(() => {
             diceValue = null;
@@ -500,8 +316,6 @@ function executeMove(token) {
 
 function handleCaptures(movedToken) {
     if (movedToken.isVictoryPath) return;
-    
-    // Check if on safe zone
     let [r, c] = GLOBAL_TRACK[movedToken.position];
     if (SAFE_ZONES.some(z => z[0]===r && z[1]===c)) return;
 
@@ -540,16 +354,11 @@ function updatePlayerIndicators() {
     });
 }
 
-function checkWinner(color) {
-    return state[color].every(t => t.finished);
-}
-
 function renderHistory() {
     moveList.innerHTML = history.map(m => `<li>${m}</li>`).join("");
 }
 
 function capitalize(text) { return text.charAt(0).toUpperCase() + text.slice(1); }
-
 function setStatus(text) { statusElement.textContent = text; }
 
 function newGame() {
@@ -564,7 +373,6 @@ function newGame() {
     setStatus("Red's turn");
     updatePlayerIndicators();
     renderHistory();
-    
     saveGame();
     
     if (playerTypes[COLORS[currentPlayerIndex]] === 'bot') {
@@ -572,7 +380,6 @@ function newGame() {
     }
 }
 
-// Interactivity
 canvas.addEventListener("mousemove", (e) => {
     if (gameOver || isRolling) { hoveredToken = null; return; }
     
@@ -586,7 +393,7 @@ canvas.addEventListener("mousemove", (e) => {
     for (let token of state[activeColor]) {
         let dx = x - token.currentX;
         let dy = y - token.currentY;
-        if (dx*dx + dy*dy <= 196) { // 14^2 radius
+        if (dx*dx + dy*dy <= 196) {
             hoveredToken = token;
             break;
         }
@@ -594,7 +401,7 @@ canvas.addEventListener("mousemove", (e) => {
 });
 
 canvas.addEventListener("click", () => {
-    if (hoveredToken && isValidMove(hoveredToken)) {
+    if (hoveredToken && isValidMove(hoveredToken, COLORS[currentPlayerIndex], diceValue)) {
         executeMove(hoveredToken);
         hoveredToken = null;
     }
@@ -630,7 +437,6 @@ document.getElementById("startGameBtn").addEventListener("click", () => {
     newGame();
 });
 
-// Save/Load System
 function saveGame() {
     const saveData = {
         state: state,
@@ -691,7 +497,6 @@ function loadGame(saveData) {
     }
 }
 
-// Initial Load Logic
 const savedDataString = localStorage.getItem('ludoSave');
 const resumeModal = document.getElementById('resumeModal');
 
