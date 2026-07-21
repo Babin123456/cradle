@@ -393,8 +393,7 @@ function nextTurn() {
     state.currentPlayer = next;
 }
 
-function hasPieces(player) {
-    return state.board.flat().some(cell => cell.owner === player);
+    state.currentPlayer = nextPlayer;
 }
 
 function renderStats() {
@@ -407,7 +406,7 @@ function renderStats() {
         div.className = `player-card ${player}`;
 
         if (!state.isActive && state.winner === player) {
-            div.textContent = `👑 ${player.toUpperCase()} : ${count}`;
+            div.textContent = `${player.toUpperCase()} : ${count}`;
         } else {
             div.textContent = `${player.toUpperCase()} : ${count}`;
         }
