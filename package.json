@@ -6,7 +6,7 @@
   "scripts": {
     "generate": "node scripts/generate-projects.js",
     "test": "echo \"Error: no test specified\" && exit 1",
-    "dev": "npm run generate && live-server",
+    "dev": "npm run generate && npx live-server",
     "build": "npm run generate"
   },
   "repository": {
