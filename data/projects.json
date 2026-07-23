@@ -15,6 +15,11 @@
     "path": "projects/productivity/attendance-tracker/"
   },
   {
+    "title": "Brain Dump Collector",
+    "category": "productivity",
+    "path": "projects/productivity/brain-dump-collector/"
+  },
+  {
     "title": "Cannon Shooting",
     "category": "games",
     "path": "projects/games/cannon-shooting/"
