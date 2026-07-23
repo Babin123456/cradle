@@ -25,11 +25,22 @@ body {
   border-bottom: 1px solid rgba(0, 245, 255, 0.2);
 }
 
-.logo {
-  font-family: 'Orbitron', sans-serif;
-  font-size: 20px;
-  font-weight: 800;
-  letter-spacing: 1px;
+.rules-mode-selector {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 20px;
+}
+
+.form-select {
+  background: rgba(18, 25, 45, 0.8);
+  color: #00f5ff;
+  border: 1px solid rgba(0, 245, 255, 0.4);
+  border-radius: 6px;
+  padding: 6px 12px;
+  font-size: 0.95rem;
+  outline: none;
 }
 
 .logo span {
