@@ -17,11 +17,13 @@ Sound Wave Visualizer records microphone input using the Web Audio API and rende
 
 ```
 sound-wave-visualizer/
-├── index.html      # App shell, canvas elements, controls, recordings list
-├── style.css       # Full dark-theme styling and responsive layout
-├── script.js       # All logic: audio graph, canvas rendering, recording, playback
-├── README.md       # User-facing documentation
-└── ARCHITECTURE.md # This file
+├── index.html            # App shell, canvas elements, controls, recordings list
+├── style.css             # Full dark-theme styling and responsive layout
+├── visualizerEngine.js   # Canvas frequency spectrum calculations and peak detection
+├── audioPresetsEngine.js # Synth audio presets and frequency calculations
+├── script.js             # All logic: audio graph, canvas rendering, recording, playback
+├── README.md             # User-facing documentation
+└── ARCHITECTURE.md       # This file
 ```
 
 ---
