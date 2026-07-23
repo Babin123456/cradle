@@ -8,14 +8,22 @@ const statusElement = document.getElementById('status');
 const restartButton = document.getElementById('restartBtn');
 const gridSizeSelect = document.getElementById('gridSize');
 
+const undoButton = document.getElementById('undoBtn');
+const themeSelect = document.getElementById('themeSelect');
+
 let currentSize = 4;
 let state = null;
+let undoManager = window.GameUndoManager ? window.GameUndoManager.createUndoManager(10) : null;
 
 function initGame() {
   if (gridSizeSelect) {
     currentSize = parseInt(gridSizeSelect.value, 10);
   }
   
+  if (undoManager) {
+    undoManager.clear();
+  }
+
   // Try loading saved state
   const saved = loadGameState(currentSize);
   if (saved) {
@@ -50,6 +58,10 @@ function renderBoard() {
   state.bestScore = getBestScore(state.size);
   bestScoreElement.textContent = state.bestScore;
 
+  if (undoButton && undoManager) {
+    undoButton.disabled = !undoManager.getCanUndo();
+  }
+
   if (state.won) {
     statusElement.textContent = 'You reached 2048. Keep going or restart for a fresh run.';
   } else if (state.over) {
@@ -60,9 +72,14 @@ function renderBoard() {
 }
 
 function handleMove(direction) {
+  if (undoManager) {
+    undoManager.pushState(state);
+  }
+
   const nextState = moveGameState(state, direction);
 
   if (!nextState.moved) {
+    if (undoManager) undoManager.undo(); // Pop if no move occurred
     return;
   }
 
@@ -72,7 +89,15 @@ function handleMove(direction) {
   renderBoard();
 }
 
+function handleUndo() {
+  if (!undoManager || !undoManager.getCanUndo()) return;
+  state = undoManager.undo(state);
+  saveGameState(state.size, state);
+  renderBoard();
+}
+
 function restartGame() {
+  if (undoManager) undoManager.clear();
   clearGameState(currentSize);
   state = createInitialState(currentSize);
   renderBoard();
@@ -99,15 +124,6 @@ function handleKeydown(event) {
   handleMove(direction);
 }
 
-if (gridSizeSelect) {
-  gridSizeSelect.addEventListener('change', () => {
-    // Save current game state of the previous size before switching
-    if (state) {
-      saveGameState(currentSize, state);
-    }
-    initGame();
-  });
-}
 
 restartButton.addEventListener('click', restartGame);
 document.addEventListener('keydown', handleKeydown);
