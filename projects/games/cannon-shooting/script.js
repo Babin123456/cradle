@@ -72,40 +72,47 @@ setInterval(() => {
   }, (fireTime - 2000));
 }, fireTime);
 
-$('.wheel-handle').mousedown((e) => {
+$('.wheel-handle').mousedown(function(e) {
   const clickX = e.pageX;
-  let canX = 0;
-  $(this).mousemove((e) => {
+  let canX = userCanX;
+
+  function onMouseMove(e) {
     let canDX = (e.pageX - clickX) + userCanX;
     canX = canDX < 375 && canDX > 35 ? canDX : canX;
 
     $('.user-col .cannon').css({ transform: 'translateX(' + canX + 'px)' });
     $('.user-col .wheel').css({ transform: 'rotate(' + canX + 'deg)' });
-  });
+  }
 
-  $(this).mouseup(() => {
-    $(this).unbind("mousemove");
+  function onMouseUp() {
+    $(document).off("mousemove", onMouseMove);
+    $(document).off("mouseup", onMouseUp);
     userCanX = canX;
-  });
+  }
+
+  $(document).on("mousemove", onMouseMove);
+  $(document).on("mouseup", onMouseUp);
 });
 
-$('.level-handle').mousedown((e) => {
+$('.level-handle').mousedown(function(e) {
   const clickY = e.pageY;
-  let canY = 0;
-  $(this).mousemove((e) => {
+  let canY = userCanY;
+
+  function onMouseMove(e) {
     let canDY = (e.pageY - clickY) + userCanY;
     canY = canDY < 65 && canDY > -5 ? canDY : canY;
 
     $('.level-handle').text(canY);
     $('.user-col .pipe').css({ transform: 'rotate(' + canY + 'deg)' });
-  });
+  }
 
-  $(this).mouseup(() => {
-    $(this).unbind("mousemove");
+  function onMouseUp() {
+    $(document).off("mousemove", onMouseMove);
+    $(document).off("mouseup", onMouseUp);
     userCanY = canY;
-  });
+  }
+
+  $(document).on("mousemove", onMouseMove);
+  $(document).on("mouseup", onMouseUp);
 });
 
-$(document).mouseup(() => {
-  $(this).unbind("mousemove");
-});
