@@ -15,6 +15,11 @@
     "path": "projects/productivity/attendance-tracker/"
   },
   {
+    "title": "Browser Storage Inspector",
+    "category": "dev-tools",
+    "path": "projects/dev-tools/browser-storage-inspector/"
+  },
+  {
     "title": "Cannon Shooting",
     "category": "games",
     "path": "projects/games/cannon-shooting/"
