@@ -55,6 +55,11 @@
     "path": "projects/games/memory-flip-game/"
   },
   {
+    "title": "Morse Code Studio",
+    "category": "misc",
+    "path": "projects/misc/morse-code-studio/"
+  },
+  {
     "title": "Neural Network Playground",
     "category": "aiml",
     "path": "projects/aiml/neural-network-playground/"
@@ -63,6 +68,11 @@
     "title": "Periodic Table",
     "category": "misc",
     "path": "projects/misc/periodic-table/"
+  },
+  {
+    "title": "Reading Progress Tracker",
+    "category": "productivity",
+    "path": "projects/productivity/reading-progress-tracker/"
   },
   {
     "title": "Sound Wave Visualizer",
