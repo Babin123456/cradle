@@ -322,4 +322,8 @@ body {
     font-size: 0.9rem;
     color: #00ff66;
     font-weight: bold;
-}
+}
+#preset-selector option {
+    background-color: #1e1e24;
+    color: #ffffff;
+}

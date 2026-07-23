@@ -150,6 +150,7 @@ function renderProjects(projects) {
       title: project.title,
       subtitle: project.path,
       badge: project.category,
+      image: `${project.path}thumbnail.svg`,
       footer: CradleButton.create({
         variant: "outline",
         size: "sm",

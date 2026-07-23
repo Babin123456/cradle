@@ -21,6 +21,8 @@ let isRolling = false;
 let history = [];
 let gameOver = false;
 let hoveredToken = null;
+let consecutiveSixes = 0;
+let lastMovedToken = null;
 
 let playerTypes = {
     red: 'human',
@@ -235,6 +237,23 @@ function rollDice() {
         isRolling = false;
         setStatus(`${capitalize(COLORS[currentPlayerIndex])} rolled ${diceValue}`);
         
+        if (diceValue === 6) {
+            consecutiveSixes++;
+            if (consecutiveSixes === 3) {
+                if (lastMovedToken) {
+                    lastMovedToken.position = -1;
+                    lastMovedToken.isVictoryPath = false;
+                    lastMovedToken.finished = false;
+                    animateTokenTo(lastMovedToken);
+                }
+                history.unshift(`${capitalize(COLORS[currentPlayerIndex])} penalized for three 6s`);
+                setTimeout(nextTurn, 1000);
+                return;
+            }
+        } else {
+            consecutiveSixes = 0;
+        }
+
         saveGame();
         checkAutoTurn();
     }, 1000);
@@ -257,6 +276,15 @@ function executeAITurn(validMoves) {
     }
 }
 
+function handleCaptures(token) {
+    const capturedTokens = LudoEngine.checkCaptures(token, state);
+    capturedTokens.forEach(cap => {
+        animateTokenTo(cap);
+        history.unshift(`${capitalize(token.color)} captured ${capitalize(cap.color)}!`);
+    });
+    return capturedTokens.length > 0;
+}
+
 function executeMove(token) {
     const isHomeSpawn = token.position === -1;
     const nextState = LudoEngine.getNextPositionState(token, diceValue);
@@ -264,17 +292,16 @@ function executeMove(token) {
     token.position = nextState.position;
     token.isVictoryPath = nextState.isVictoryPath;
     token.finished = nextState.finished;
+    lastMovedToken = token;
+
+    let didCapture = false;
 
     if (isHomeSpawn) {
         history.unshift(`${capitalize(token.color)} Token ${token.id + 1} entered board`);
     } else if (token.finished) {
         history.unshift(`${capitalize(token.color)} Token ${token.id + 1} reached center`);
     } else {
-        const capturedTokens = LudoEngine.checkCaptures(token, state);
-        capturedTokens.forEach(cap => {
-            animateTokenTo(cap);
-            history.unshift(`${capitalize(token.color)} captured ${capitalize(cap.color)}!`);
-        });
+        didCapture = handleCaptures(token);
     }
 
     animateTokenTo(token);
@@ -286,7 +313,11 @@ function executeMove(token) {
         return;
     }
 
-    if (diceValue !== 6 && !token.finished) {
+    if (didCapture) {
+        history.unshift(`${capitalize(COLORS[currentPlayerIndex])} awarded bonus roll for capture`);
+    }
+
+    if (diceValue !== 6 && !token.finished && !didCapture) {
         setTimeout(nextTurn, 600);
     } else {
         setTimeout(() => {
@@ -301,6 +332,8 @@ function executeMove(token) {
 }
 
 function nextTurn() {
+    consecutiveSixes = 0;
+    lastMovedToken = null;
     currentPlayerIndex = (currentPlayerIndex + 1) % COLORS.length;
     diceValue = null;
     diceCube.className = 'cube';
