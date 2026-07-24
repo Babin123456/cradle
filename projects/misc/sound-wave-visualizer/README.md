@@ -4,12 +4,6 @@ A real-time audio visualization tool that records microphone input and displays 
 
 ---
 
-## Overview
-
-Sound Wave Visualizer records microphone input using the Web Audio API and renders a live waveform, frequency spectrum and scrolling spectrogram via Canvas 2D. Recordings can be replayed in the browser or downloaded as audio files. It runs entirely in the browser with no server or dependencies.
-
----
-
 ## Purpose & Goals
 
 - Demonstrate real-time audio processing using the Web Audio API's `AnalyserNode`
@@ -42,7 +36,7 @@ Sound Wave Visualizer records microphone input using the Web Audio API and rende
 
 ---
 
-## Running Locally
+## Running Locally / Development Notes
 
 This project uses `getUserMedia` which requires a secure context (HTTPS or localhost).
 
@@ -54,22 +48,54 @@ python3 -m http.server 8000
 
 > ⚠️ Do **not** open `index.html` by double-clicking — the `file://` protocol blocks microphone access.
 
+- No build step required. Edit files and refresh the browser.
+- On Chromium, inspect the audio graph in `chrome://webrtc-internals` or DevTools → Media panel.
+
 ---
 
-## Folder & File Structure
+## File Structure & Responsibilities
 
-```text
+```
 sound-wave-visualizer/
 ├── index.html      # App shell, canvas elements, control bar, recordings list
 ├── style.css       # Dark-theme styling, responsive grid, recording rows
 ├── script.js       # Web Audio API, canvas rendering, MediaRecorder integration
-├── thumbnail.svg   # Project thumbnail image
-└── README.md       # Consolidated project documentation and technical architecture
+└── README.md       # Complete documentation & architecture guide
 ```
+
+### Component Breakdown
+
+| File | Responsibility |
+|---|---|
+| `index.html` | App structure: header, control bar, settings row, three canvas panels, recordings list |
+| `style.css` | Design tokens, button styles, visualiser grid (2-col), recording rows, status pill animations |
+| `script.js` | Audio graph, waveform / spectrum / spectrogram draw functions, MediaRecorder, playback, timer, event wiring |
+
+### Detailed File Responsibilities
+
+#### `script.js`
+
+- `initAudio()` — Creates `AudioContext`, `AnalyserNode`, `GainNode`, wires graph
+- `startRecording()` / `stopRecording()` — `getUserMedia` + `MediaRecorder` lifecycle
+- `finalizeRecording()` — Assembles `Blob` from chunks, creates `ObjectURL`, pushes to `recordings`
+- `drawWaveform(data)` — Oscilloscope with RMS dB using `getByteTimeDomainData`
+- `drawSpectrum(data, bufferLength)` — FFT bar chart with magnitude-to-colour gradient
+- `drawSpectrogram(data, bufferLength)` — Shifts canvas image left by 1 px, draws new column
+- `playRecording(id)` / `stopPlayback()` / `togglePlayback(id)` — `Audio` element playback
+- `renderRecordings()` — Generates HTML list of recording rows with event listeners
+- `resizeCanvases()` — Responsive canvas sizing via `ResizeObserver`
+- `hslToRgb()`, `blendColors()`, `lerp()` — Colour math utilities
+
+#### `style.css`
+
+- `.status-dot.recording` — CSS `pulse-red` animation for live recording indicator
+- `.vis-panel.wide` — spans full two-column grid width (spectrogram)
+- `.bar-column` — FFT bars; coloured by JS via `fillStyle` per-draw
+- `@keyframes pulse-red` / `pulse-green` — status dot glow animations
 
 ---
 
-## System & Project Architecture Overview
+## System / Project Architecture
 
 The project has a single-file JavaScript architecture centred on the Web Audio API graph:
 
@@ -92,21 +118,9 @@ graph TD
 - **Animation loop** (`requestAnimationFrame`) reads `Uint8Array` buffers from the `AnalyserNode` and repaints all three canvases 60 fps.
 - **MediaRecorder** runs in parallel, collecting audio chunks into a `Blob` for download or in-browser playback.
 
----
+### Data Flow / Execution Flow
 
-## Component Breakdown
-
-| File | Responsibility |
-|---|---|
-| `index.html` | App structure: header, control bar, settings row, three canvas panels, recordings list |
-| `style.css` | Design tokens, button styles, visualiser grid (2-col), recording rows, status pill animations |
-| `script.js` | Audio graph, waveform / spectrum / spectrogram draw functions, MediaRecorder, playback, timer, event wiring |
-
----
-
-## Data Flow / Execution Flow
-
-```text
+```
 User opens index.html
         ↓
 Browser loads style.css → script.js
@@ -134,44 +148,6 @@ User clicks Play / Download on a recording row
 
 ---
 
-## Technologies Used
-
-| Technology | Purpose |
-|---|---|
-| HTML5 Canvas 2D | Rendering waveform, spectrum bars and spectrogram pixels |
-| Web Audio API | `AudioContext`, `AnalyserNode`, `GainNode`, `MediaStreamSource` |
-| MediaDevices API | `getUserMedia` for microphone capture |
-| MediaRecorder API | Capturing audio data for download and playback |
-| CSS3 (Grid, Custom Properties, Animations) | Layout, theming and status-dot pulse animations |
-| Vanilla JavaScript (ES6+) | All logic; no dependencies |
-| Google Fonts (Outfit, JetBrains Mono) | Typography |
-
----
-
-## File Responsibilities
-
-### `script.js`
-
-- `initAudio()` — Creates `AudioContext`, `AnalyserNode`, `GainNode`, wires graph
-- `startRecording()` / `stopRecording()` — `getUserMedia` + `MediaRecorder` lifecycle
-- `finalizeRecording()` — Assembles `Blob` from chunks, creates `ObjectURL`, pushes to `recordings`
-- `drawWaveform(data)` — Oscilloscope with RMS dB using `getByteTimeDomainData`
-- `drawSpectrum(data, bufferLength)` — FFT bar chart with magnitude-to-colour gradient
-- `drawSpectrogram(data, bufferLength)` — Shifts canvas image left by 1 px, draws new column
-- `playRecording(id)` / `stopPlayback()` / `togglePlayback(id)` — `Audio` element playback
-- `renderRecordings()` — Generates HTML list of recording rows with event listeners
-- `resizeCanvases()` — Responsive canvas sizing via `ResizeObserver`
-- `hslToRgb()`, `blendColors()`, `lerp()` — Colour math utilities
-
-### `style.css`
-
-- `.status-dot.recording` — CSS `pulse-red` animation for live recording indicator
-- `.vis-panel.wide` — spans full two-column grid width (spectrogram)
-- `.bar-column` — FFT bars; coloured by JS via `fillStyle` per-draw
-- `@keyframes pulse-red` / `pulse-green` — status dot glow animations
-
----
-
 ## Design Decisions
 
 - **Shared `AnalyserNode` for all three visualisations** — A single `getByteTimeDomainData` and `getByteFrequencyData` call per frame feeds all canvases, avoiding redundant reads.
@@ -182,23 +158,16 @@ User clicks Play / Download on a recording row
 
 ---
 
-## Dependencies
+## Technologies Used & Dependencies
 
 None. Uses only native browser APIs:
-- **Web Audio API** (`AudioContext`, `AnalyserNode`, `GainNode`)
+- **Web Audio API** (`AudioContext`, `AnalyserNode`, `GainNode`, `MediaStreamSource`)
 - **MediaDevices API** (`getUserMedia`)
 - **MediaRecorder API** (recording + download)
 - **Canvas 2D API** (all visualisations)
-
----
-
-## Future Improvements
-
-- Beat / BPM detection using onset detection on the frequency data
-- Note detection overlay using pitch detection (autocorrelation or YIN algorithm)
-- Save spectrogram as a PNG screenshot
-- Custom frequency-band highlighting (e.g. bass, mid, treble zones)
-- Noise gate / threshold-triggered recording to skip silence
+- **CSS3** (Grid, Custom Properties, Animations)
+- **Vanilla JavaScript (ES6+)** (All logic; no dependencies)
+- **Google Fonts** (Outfit, JetBrains Mono)
 
 ---
 
@@ -212,11 +181,13 @@ None. Uses only native browser APIs:
 
 ---
 
-## Development Notes
+## Future Improvements
 
-- Open `index.html` via `python3 -m http.server 8000` or any local server — not by double-clicking, as `file://` blocks `getUserMedia`.
-- No build step required. Edit files and refresh the browser.
-- On Chromium, inspect the audio graph in `chrome://webrtc-internals` or DevTools → Media panel.
+- Beat / BPM detection using onset detection on the frequency data
+- Note detection overlay using pitch detection (autocorrelation or YIN algorithm)
+- Save spectrogram as a PNG screenshot
+- Custom frequency-band highlighting (e.g. bass, mid, treble zones)
+- Noise gate / threshold-triggered recording to skip silence
 
 ---
 
