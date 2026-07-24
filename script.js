@@ -217,6 +217,81 @@ if (clearFiltersBtn) {
   clearFiltersBtn.addEventListener("click", clearFilters);
 }
 
+// Keyboard Shortcuts & Helper Modal
+const shortcutsBtn = document.getElementById("shortcuts-btn");
+const shortcutsModal = document.getElementById("shortcuts-modal");
+const shortcutsCloseBtn = document.getElementById("close-shortcuts");
+const shortcutsOverlay = document.getElementById("shortcuts-overlay");
+
+function toggleShortcutsModal(show) {
+  if (!shortcutsModal) return;
+  const shouldOpen = show !== undefined ? show : !shortcutsModal.classList.contains("open");
+  shortcutsModal.classList.toggle("open", shouldOpen);
+  shortcutsModal.setAttribute("aria-hidden", shouldOpen ? "false" : "true");
+}
+
+if (shortcutsBtn) {
+  shortcutsBtn.addEventListener("click", () => toggleShortcutsModal(true));
+}
+if (shortcutsCloseBtn) {
+  shortcutsCloseBtn.addEventListener("click", () => toggleShortcutsModal(false));
+}
+if (shortcutsOverlay) {
+  shortcutsOverlay.addEventListener("click", () => toggleShortcutsModal(false));
+}
+
+document.addEventListener("keydown", (e) => {
+  const activeElement = document.activeElement;
+  const isInputFocused =
+    activeElement &&
+    (activeElement.tagName === "INPUT" ||
+      activeElement.tagName === "TEXTAREA" ||
+      activeElement.isContentEditable);
+
+  if (e.key === "Escape") {
+    if (shortcutsModal && shortcutsModal.classList.contains("open")) {
+      toggleShortcutsModal(false);
+      return;
+    }
+    if (isInputFocused || searchInput.value !== "" || selectedCategory !== "all") {
+      clearFilters();
+      searchInput.blur();
+    }
+    return;
+  }
+
+  if (shortcutsModal && shortcutsModal.classList.contains("open")) {
+    return;
+  }
+
+  if (
+    (e.key === "/" && !isInputFocused) ||
+    ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "k")
+  ) {
+    e.preventDefault();
+    searchInput.focus();
+    searchInput.select();
+    return;
+  }
+
+  if (e.key === "?" && !isInputFocused) {
+    e.preventDefault();
+    toggleShortcutsModal(true);
+    return;
+  }
+
+  if ((e.key === "t" || e.key === "T") && !isInputFocused) {
+    if (window.CradleThemeToggle && typeof window.CradleThemeToggle.toggle === "function") {
+      window.CradleThemeToggle.toggle();
+    } else {
+      const isLight = document.documentElement.classList.toggle("light-theme");
+      localStorage.setItem("theme", isLight ? "light" : "dark");
+    }
+    return;
+  }
+});
+
 document.addEventListener("DOMContentLoaded", () => {
   loadProjects();
 });
+
