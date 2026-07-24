@@ -55,6 +55,11 @@
     "path": "projects/games/ludo-game/"
   },
   {
+    "title": "Markdown Resume Generator",
+    "category": "editor",
+    "path": "projects/editor/markdown-resume-generator/"
+  },
+  {
     "title": "Meme Generator",
     "category": "misc",
     "path": "projects/misc/meme-generator/"
