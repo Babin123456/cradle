@@ -120,16 +120,21 @@ function renderCategories() {
   categoriesContainer.innerHTML = "";
 
   categories.forEach((category) => {
+    const isActive = category === selectedCategory;
     const btn = CradleButton.create({
-      variant: category === selectedCategory ? "primary" : "ghost",
+      variant: isActive ? "primary" : "ghost",
       size: "sm",
       children: category.toUpperCase().replace("-", " "),
+      ariaLabel: `${category.toUpperCase().replace("-", " ")} projects`,
       onClick: () => {
         selectedCategory = category;
         applyFilters();
         renderCategories();
+        searchInput.focus();
       },
     });
+
+    btn.setAttribute("aria-pressed", isActive ? "true" : "false");
 
     categoriesContainer.appendChild(btn);
   });
@@ -205,6 +210,7 @@ function clearFilters() {
 
   applyFilters();
   renderCategories();
+  searchInput.focus();
 }
 
 searchInput.addEventListener("input", applyFilters);
