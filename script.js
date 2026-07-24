@@ -1,5 +1,3 @@
-import { initTheme, toggleTheme } from "./scripts/theme.js";
-
 const projectsGrid = document.getElementById("projects-grid");
 const searchInput = document.getElementById("search");
 const categoriesContainer = document.getElementById("categories");
